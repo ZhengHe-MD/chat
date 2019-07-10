@@ -572,8 +572,10 @@ $ man nc
 
 本文介绍如何使用 Go 语言，基于自定义的 CHAT 协议，从头开始搭建一个聊天服务。
 希望你能有所收获。
-**转载请注明出处**
 
+## 参考
+
+* [github: nqbao/learn-go/chatserver](https://github.com/nqbao/learn-go/tree/chat/0.0.1/chatserver)
 
 
 
