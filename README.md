@@ -6,10 +6,10 @@
 * 服务器运作的基本模型和实现
 * 写代码的乐趣
 
-本项目源码地址：[TODO]
+本项目源码地址：https://github.com/ZhengHe-MD/chat
 
 ```sh
-$ git clone [TODO]
+$ git clone https://github.com/ZhengHe-MD/chat.git
 ```
 
 本文阅读说明：
