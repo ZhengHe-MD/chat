@@ -57,7 +57,7 @@ CHAT/1.0 BROADCAST groupName data\n
 先定义一些常量：
 
 ```go
-// tcp/chat/protocol/command.go
+// chat/protocol/command.go
 const (
 	ProtocolName    = "CHAT"
 	ProtocolVersion = "1.0"
@@ -112,7 +112,7 @@ func (c *SendCommand) String() string {
 writer 比较简单：
 
 ```go
-// tcp/chat/protocol/writer.go
+// chat/protocol/writer.go
 type CommandWriter struct {
   writer *bufio.Writer
 }
@@ -147,7 +147,7 @@ reader 逻辑比较复杂，大致的步骤就是：
 reader 测试举例：
 
 ```go
-// tcp/chat/protocol/reader_test.go
+// chat/protocol/reader_test.go
 func TestSendMessage(t *testing.T) {
 	cases := []struct {
 		message      string
@@ -265,6 +265,7 @@ ok      github.com/ZhengHe-MD/network-examples/tcp/chat/protocol        0.007s
 服务需要实现的功能很简单，启动和关闭。我们可以用一个借口来定义它：
 
 ```go
+// chat/serverserver.go
 type ChatServer interface {
 	Start(ctx context.Context, address string) error
 	Close(ctx context.Context) error
@@ -278,6 +279,7 @@ type ChatServer interface {
 先理清楚服务器本身需要保留哪些信息：
 
 ```go
+// chat/server/tcp.go
 type TcpChatServer struct {
   listener       net.Listener                   
   clientConnSet  map[*clientConn]interface{} // 保存 tcp 长连接，以及每个连接的标识符，即用户名
@@ -300,7 +302,7 @@ type clientConn struct {
 我们可以这样实现它：
 
 ```go
-// tcp/chat/server/tcp.go
+// chat/server/tcp.go
 func (s *TcpChatServer) Start(ctx context.Context, address string) error {
 	if err := s.listen(ctx, address); err != nil {
 		return err
@@ -336,6 +338,7 @@ Loop:
 其中 accept 函数负责建立 clientConn 结构体并存入 clientConnSet 中：
 
 ```go
+// chat/server/tcp.go
 func (s *TcpChatServer) accept(conn net.Conn) *clientConn {
 	log.Printf("Accepting connection from %s", conn.RemoteAddr().String())
 
@@ -355,6 +358,7 @@ func (s *TcpChatServer) accept(conn net.Conn) *clientConn {
 serve 函数内部利用一个循环，在连接断开之前，负责处理与该客户端连接的后续通信工作：
 
 ```go
+// chat/server/tcp.go
 func (s *TcpChatServer) serve(cc *clientConn) {
 	mr := protocol.NewCommandReader(cc.conn)
 	defer s.remove(cc)
@@ -412,6 +416,7 @@ func (s *TcpChatServer) serve(cc *clientConn) {
 handleLogin 负责登录用户，记录用户名信息：
 
 ```go
+// chat/server/handler.go
 func (s *TcpChatServer) handleLogin(cc *clientConn, cmd *protocol.LoginCommand) (err error) {
 	cc.name = cmd.Username
 	log.Printf("set username:%s", cc.name)
@@ -424,6 +429,7 @@ func (s *TcpChatServer) handleLogin(cc *clientConn, cmd *protocol.LoginCommand) 
 handleLogout 负责登出用户，删除连接：
 
 ```go
+// chat/server/handler.go
 func (s *TcpChatServer) handleLogout(cc *clientConn, cmd *protocol.LogoutCommand) (err error) {
 	delete(s.clientConnSet, cc)
 	err = cc.conn.Close()
@@ -437,6 +443,7 @@ func (s *TcpChatServer) handleLogout(cc *clientConn, cmd *protocol.LogoutCommand
 handleSend 负责向指定用户发送消息：
 
 ```go
+// chat/server/handler.go
 func (s *TcpChatServer) handleSend(cc *clientConn, cmd *protocol.SendCommand) (err error) {
 	for scc, _ := range s.clientConnSet {
 		if scc.name == cmd.Name {
@@ -459,6 +466,7 @@ func (s *TcpChatServer) handleSend(cc *clientConn, cmd *protocol.SendCommand) (e
 handleGroup 负责建立群聊天：
 
 ```go
+// chat/server/handler.go
 func (s *TcpChatServer) handleGroup(cc *clientConn, cmd *protocol.GroupCommand) (err error) {
 	s.mu.RLock()
 	if _, ok := s.groupToMembers[cmd.GroupName]; ok {
@@ -481,6 +489,7 @@ func (s *TcpChatServer) handleGroup(cc *clientConn, cmd *protocol.GroupCommand) 
 handleLeave 帮助用户离开群聊天
 
 ```go
+// chat/server/handler.go
 func (s *TcpChatServer) handleLeave(cc *clientConn, cmd *protocol.LeaveCommand) (err error) {
 	s.mu.RLock()
 	if _, ok := s.groupToMembers[cmd.GroupName]; !ok {
@@ -510,8 +519,7 @@ func (s *TcpChatServer) handleLeave(cc *clientConn, cmd *protocol.LeaveCommand) 
 ### 启动服务
 
 ```go
-// tcp/chat/server/cmd/main.go
-
+// chat/server/cmd/main.go
 func main() {
   ctx := context.TODO()
   var s server.ChatServer
