@@ -543,7 +543,7 @@ $ man nc
 
 整个演示过程如下所示：
 
-![demo](https://recordit.co/IQvQfEDkPJ)
+![demo](http://g.recordit.co/IQvQfEDkPJ.gif)
 
 看一下服务的输出：
 
