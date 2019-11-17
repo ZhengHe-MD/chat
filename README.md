@@ -262,7 +262,7 @@ ok      github.com/ZhengHe-MD/network-examples/tcp/chat/protocol        0.007s
 
 ## 服务
 
-服务需要实现的功能很简单，启动和关闭。我们可以用一个借口来定义它：
+服务需要实现的功能很简单，启动和关闭。我们可以用一个接口来定义它：
 
 ```go
 // chat/serverserver.go
